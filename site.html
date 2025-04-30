@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador de Rotina</title>
+    <h6 style="font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif; font-size: 20px; text-align: center; background-color: gray;">By Luiz Henrique Costa Rezende</h6>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom CSS for animations and transitions */
+        .task-item {
+            transition: all 0.3s ease;
+        }
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .habit-tracker .habit-day {
+            transition: all 0.2s ease;
+        }
+        .habit-tracker .habit-day:hover {
+            transform: scale(1.1);
+        }
+        .pomodoro-timer {
+            box-shadow: 0 0 20px rgba(255, 99, 71, 0.3);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .completed-task {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-indigo-700 mb-2">Organizador de Rotina</h1>
+            <p class="text-gray-600">Gerencie suas tarefas, hábitos e tempo de forma eficiente</p>
+            <div class="mt-4">
+                <span id="current-date" class="text-lg font-medium text-gray-700"></span>
+            </div>
+        </header>
+
+        <!-- Main Navigation Tabs -->
+        <div class="flex justify-center mb-8">
+            <div class="inline-flex rounded-md shadow-sm">
+                <button onclick="switchTab('tasks')" class="tab-btn px-4 py-2 text-sm font-medium rounded-l-lg bg-indigo-600 text-white hover:bg-indigo-700 focus:z-10 focus:ring-2 focus:ring-indigo-500">
+                    <i class="fas fa-tasks mr-2"></i>Tarefas
+                </button>
+                <button onclick="switchTab('habits')" class="tab-btn px-4 py-2 text-sm font-medium border-t border-b border-gray-200 hover:bg-gray-100 hover:text-indigo-700 focus:z-10 focus:ring-2 focus:ring-indigo-500">
+                    <i class="fas fa-calendar-check mr-2"></i>Hábitos
+                </button>
+                <button onclick="switchTab('calendar')" class="tab-btn px-4 py-2 text-sm font-medium border-t border-b border-gray-200 hover:bg-gray-100 hover:text-indigo-700 focus:z-10 focus:ring-2 focus:ring-indigo-500">
+                    <i class="fas fa-calendar-alt mr-2"></i>Calendário
+                </button>
+                <button onclick="switchTab('pomodoro')" class="tab-btn px-4 py-2 text-sm font-medium rounded-r-lg border border-gray-200 hover:bg-gray-100 hover:text-indigo-700 focus:z-10 focus:ring-2 focus:ring-indigo-500">
+                    <i class="fas fa-clock mr-2"></i>Pomodoro
+                </button>
+            </div>
+        </div>
+
+        <!-- Tasks Tab Content -->
+        <div id="tasks" class="tab-content active">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800">Minhas Tarefas</h2>
+                    <button onclick="openTaskModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Nova Tarefa
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex space-x-2">
+                        <button onclick="filterTasks('all')" class="filter-btn active px-3 py-1 rounded-full bg-indigo-100 text-indigo-800">Todas</button>
+                        <button onclick="filterTasks('today')" class="filter-btn px-3 py-1 rounded-full bg-gray-100 text-gray-800">Hoje</button>
+                        <button onclick="filterTasks('important')" class="filter-btn px-3 py-1 rounded-full bg-red-100 text-red-800">Importantes</button>
+                        <button onclick="filterTasks('completed')" class="filter-btn px-3 py-1 rounded-full bg-green-100 text-green-800">Concluídas</button>
+                    </div>
+                </div>
+                
+                <div id="tasks-list" class="space-y-3">
+                    <!-- Tasks will be added here dynamically -->
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-md overflow-hidden p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Prioridades</h3>
+                    <div id="priority-tasks" class="space-y-3">
+                        <!-- Priority tasks will be added here -->
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-md overflow-hidden p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Estatísticas</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <p class="text-gray-600">Tarefas hoje</p>
+                            <p id="today-tasks-count" class="text-2xl font-bold">0</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Concluídas</p>
+                            <p id="completed-tasks-count" class="text-2xl font-bold">0</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Prioritárias</p>
+                            <p id="important-tasks-count" class="text-2xl font-bold">0</p>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-4">
+                        <div id="completion-bar" class="bg-green-500 h-4 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <p id="completion-percentage" class="text-right mt-1 text-sm text-gray-600">0% concluído</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Habits Tab Content -->
+        <div id="habits" class="tab-content">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800">Meus Hábitos</h2>
+                    <button onclick="openHabitModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Novo Hábito
+                    </button>
+                </div>
+                
+                <div id="habits-list" class="space-y-6">
+                    <!-- Habits will be added here dynamically -->
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md overflow-hidden p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Progresso dos Hábitos</h3>
+                <div id="habits-progress" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Habit progress charts will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Tab Content -->
+        <div id="calendar" class="tab-content">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800">Calendário</h2>
+                    <div class="flex space-x-2">
+                        <button onclick="changeMonth(-1)" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-lg">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button onclick="changeMonth(1)" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-lg">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button onclick="goToToday()" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-3 py-1 rounded-lg">
+                            Hoje
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="calendar-header" class="grid grid-cols-7 gap-1 mb-2 text-center font-medium">
+                    <div class="py-2 text-red-500">Dom</div>
+                    <div class="py-2">Seg</div>
+                    <div class="py-2">Ter</div>
+                    <div class="py-2">Qua</div>
+                    <div class="py-2">Qui</div>
+                    <div class="py-2">Sex</div>
+                    <div class="py-2 text-red-500">Sáb</div>
+                </div>
+                
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1">
+                    <!-- Calendar days will be added here dynamically -->
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md overflow-hidden p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Eventos de Hoje</h3>
+                <div id="today-events" class="space-y-3">
+                    <!-- Today's events will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Pomodoro Tab Content -->
+        <div id="pomodoro" class="tab-content">
+            <div class="flex flex-col items-center justify-center">
+                <div class="pomodoro-timer bg-white rounded-full w-64 h-64 flex items-center justify-center mb-8">
+                    <div class="text-center">
+                        <div id="timer-display" class="text-4xl font-bold text-gray-800 mb-2">25:00</div>
+                        <div id="timer-state" class="text-lg text-gray-600 mb-4">Pronto para começar</div>
+                        <div class="flex space-x-4">
+                            <button id="start-btn" onclick="startTimer()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg">
+                                <i class="fas fa-play mr-2"></i>Iniciar
+                            </button>
+                            <button id="pause-btn" onclick="pauseTimer()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg hidden">
+                                <i class="fas fa-pause mr-2"></i>Pausar
+                            </button>
+                            <button onclick="resetTimer()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg">
+                                <i class="fas fa-redo mr-2"></i>Resetar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 w-full max-w-md">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Configurações Pomodoro</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Tempo de Foco (minutos)</label>
+                            <input id="focus-time" type="number" min="1" max="60" value="25" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Tempo de Pausa Curta (minutos)</label>
+                            <input id="short-break-time" type="number" min="1" max="15" value="5" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Tempo de Pausa Longa (minutos)</label>
+                            <input id="long-break-time" type="number" min="1" max="30" value="15" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Pomodoros até pausa longa</label>
+                            <input id="pomodoros-until-long-break" type="number" min="1" max="10" value="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <button onclick="savePomodoroSettings()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                            Salvar Configurações
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 w-full max-w-md mt-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Histórico de Sessões</h3>
+                    <div id="pomodoro-history" class="space-y-3">
+                        <!-- Pomodoro sessions will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="task-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800" id="task-modal-title">Nova Tarefa</h3>
+                <button onclick="closeTaskModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="task-form" class="space-y-4">
+                <input type="hidden" id="task-id">
+                <div>
+                    <label class="block text-gray-700 mb-2">Título</label>
+                    <input id="task-title" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Descrição</label>
+                    <textarea id="task-description" class="w-full px-3 py-2 border border-gray-300 rounded-lg" rows="3"></textarea>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Data</label>
+                    <input id="task-date" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">Prioridade</label>
+                        <select id="task-priority" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="low">Baixa</option>
+                            <option value="medium">Média</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Categoria</label>
+                        <select id="task-category" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="work">Trabalho</option>
+                            <option value="personal">Pessoal</option>
+                            <option value="health">Saúde</option>
+                            <option value="study">Estudo</option>
+                            <option value="other">Outro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <input id="task-important" type="checkbox" class="mr-2">
+                    <label class="text-gray-700">Marcar como importante</label>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeTaskModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">Cancelar</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Habit Modal -->
+    <div id="habit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800" id="habit-modal-title">Novo Hábito</h3>
+                <button onclick="closeHabitModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="habit-form" class="space-y-4">
+                <input type="hidden" id="habit-id">
+                <div>
+                    <label class="block text-gray-700 mb-2">Nome do Hábito</label>
+                    <input id="habit-name" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Descrição</label>
+                    <textarea id="habit-description" class="w-full px-3 py-2 border border-gray-300 rounded-lg" rows="3"></textarea>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Frequência</label>
+                    <select id="habit-frequency" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="daily">Diariamente</option>
+                        <option value="weekly">Semanalmente</option>
+                        <option value="monthly">Mensalmente</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Meta</label>
+                    <div class="flex items-center">
+                        <span class="mr-2">Repetir</span>
+                        <input id="habit-goal" type="number" min="1" value="1" class="w-16 px-3 py-2 border border-gray-300 rounded-lg">
+                        <span class="ml-2">vezes por</span>
+                        <span id="habit-frequency-unit" class="ml-2">dia</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Cor</label>
+                    <div class="flex space-x-2">
+                        <div class="color-option bg-blue-500 w-8 h-8 rounded-full cursor-pointer" data-color="blue" onclick="selectHabitColor('blue')"></div>
+                        <div class="color-option bg-green-500 w-8 h-8 rounded-full cursor-pointer" data-color="green" onclick="selectHabitColor('green')"></div>
+                        <div class="color-option bg-yellow-500 w-8 h-8 rounded-full cursor-pointer" data-color="yellow" onclick="selectHabitColor('yellow')"></div>
+                        <div class="color-option bg-red-500 w-8 h-8 rounded-full cursor-pointer" data-color="red" onclick="selectHabitColor('red')"></div>
+                        <div class="color-option bg-purple-500 w-8 h-8 rounded-full cursor-pointer" data-color="purple" onclick="selectHabitColor('purple')"></div>
+                        <div class="color-option bg-pink-500 w-8 h-8 rounded-full cursor-pointer" data-color="pink" onclick="selectHabitColor('pink')"></div>
+                    </div>
+                    <input type="hidden" id="habit-color" value="blue">
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeHabitModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">Cancelar</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Event Modal -->
+    <div id="event-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800">Eventos do Dia</h3>
+                <button onclick="closeEventModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="event-list" class="space-y-3 mb-4">
+                <!-- Events will be listed here -->
+            </div>
+            
+            <form id="event-form" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">Título do Evento</label>
+                    <input id="event-title" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">Hora de Início</label>
+                        <input id="event-start-time" type="time" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Hora de Término</label>
+                        <input id="event-end-time" type="time" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">Cancelar</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let habits = JSON.parse(localStorage.getItem('habits')) || [];
+        let events = JSON.parse(localStorage.getItem('events')) || [];
+        let pomodoroSettings = JSON.parse(localStorage.getItem('pomodoroSettings')) || {
+            focusTime: 25,
+            shortBreakTime: 5,
+            longBreakTime: 15,
+            pomodorosUntilLongBreak: 4
+        };
+        let pomodoroHistory = JSON.parse(localStorage.getItem('pomodoroHistory')) || [];
+        
+        let currentTab = 'tasks';
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let selectedDate = new Date();
+        
+        let timer;
+        let timerRunning = false;
+        let timerPaused = false;
+        let currentTimerType = 'focus'; // 'focus', 'shortBreak', 'longBreak'
+        let pomodoroCount = 0;
+        let remainingTime = pomodoroSettings.focusTime * 60;
+        
+        // DOM Content Loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date
+            updateCurrentDate();
+            
+            // Load data
+            loadTasks();
+            loadHabits();
+            loadCalendar();
+            loadPomodoroSettings();
+            loadPomodoroHistory();
+            
+            // Set up event listeners
+            document.getElementById('task-form').addEventListener('submit', saveTask);
+            document.getElementById('habit-form').addEventListener('submit', saveHabit);
+            document.getElementById('event-form').addEventListener('submit', saveEvent);
+            document.getElementById('habit-frequency').addEventListener('change', updateHabitFrequencyUnit);
+            
+            // Initialize Pomodoro timer display
+            updateTimerDisplay();
+        });
+        
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Deactivate all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-800', 'border', 'border-gray-200');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Activate selected tab button
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => 
+                btn.textContent.includes(tabName.charAt(0).toUpperCase() + tabName.slice(1)) || 
+                btn.textContent.includes('Pomodoro')
+            );
+            
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-gray-800', 'border', 'border-gray-200');
+                activeBtn.classList.add('bg-indigo-600', 'text-white');
+            }
+            
+            currentTab = tabName;
+            
+            // Refresh content if needed
+            if (tabName === 'calendar') {
+                loadCalendar();
+            } else if (tabName === 'habits') {
+                loadHabits();
+            }
+        }
+        
+        // Filter tasks
+        function filterTasks(filterType) {
+            // Deactivate all filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-100', 'text-indigo-800');
+                btn.classList.add('bg-gray-100', 'text-gray-800');
+            });
+            
+            // Activate selected filter button
+            const activeBtn = Array.from(document.querySelectorAll('.filter-btn')).find(btn => 
+                btn.textContent.includes(filterType === 'all' ? 'Todas' : 
+                                       filterType === 'today' ? 'Hoje' : 
+                                       filterType === 'important' ? 'Importantes' : 'Concluídas')
+            );
+            
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-gray-100', 'text-gray-800');
+                activeBtn.classList.add('bg-indigo-100', 'text-indigo-800');
+            }
+            
+            // Filter tasks
+            const today = new Date().toISOString().split('T')[0];
+            let filteredTasks = tasks;
+            
+            if (filterType === 'today') {
+                filteredTasks = tasks.filter(task => task.date === today);
+            } else if (filterType === 'important') {
+                filteredTasks = tasks.filter(task => task.important);
+            } else if (filterType === 'completed') {
+                filteredTasks = tasks.filter(task => task.completed);
+            }
+            
+            // Display filtered tasks
+            displayTasks(filteredTasks);
+        }
+        
+        // Date functions
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('pt-BR', options);
+        }
+        
+        // Task functions
+        function openTaskModal(taskId = null) {
+            const modal = document.getElementById('task-modal');
+            const form = document.getElementById('task-form');
+            
+            if (taskId) {
+                // Edit existing task
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    document.getElementById('task-modal-title').textContent = 'Editar Tarefa';
+                    document.getElementById('task-id').value = task.id;
+                    document.getElementById('task-title').value = task.title;
+                    document.getElementById('task-description').value = task.description || '';
+                    document.getElementById('task-date').value = task.date || '';
+                    document.getElementById('task-priority').value = task.priority || 'medium';
+                    document.getElementById('task-category').value = task.category || 'personal';
+                    document.getElementById('task-important').checked = task.important || false;
+                }
+            } else {
+                // Add new task
+                document.getElementById('task-modal-title').textContent = 'Nova Tarefa';
+                form.reset();
+                document.getElementById('task-date').value = new Date().toISOString().split('T')[0];
+            }
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function closeTaskModal() {
+            document.getElementById('task-modal').classList.add('hidden');
+        }
+        
+        function saveTask(e) {
+            e.preventDefault();
+            
+            const taskId = document.getElementById('task-id').value;
+            const title = document.getElementById('task-title').value;
+            const description = document.getElementById('task-description').value;
+            const date = document.getElementById('task-date').value;
+            const priority = document.getElementById('task-priority').value;
+            const category = document.getElementById('task-category').value;
+            const important = document.getElementById('task-important').checked;
+            
+            if (taskId) {
+                // Update existing task
+                const index = tasks.findIndex(t => t.id === taskId);
+                if (index !== -1) {
+                    tasks[index] = {
+                        ...tasks[index],
+                        title,
+                        description,
+                        date,
+                        priority,
+                        category,
+                        important,
+                        updatedAt: new Date().toISOString()
+                    };
+                }
+            } else {
+                // Add new task
+                const newTask = {
+                    id: Date.now().toString(),
+                    title,
+                    description,
+                    date,
+                    priority,
+                    category,
+                    important,
+                    completed: false,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                tasks.push(newTask);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            
+            // Reload tasks
+            loadTasks();
+            
+            // Close modal
+            closeTaskModal();
+        }
+        
+        function loadTasks() {
+            // Sort tasks by date and priority
+            tasks.sort((a, b) => {
+                if (a.date && b.date) {
+                    if (a.date < b.date) return -1;
+                    if (a.date > b.date) return 1;
+                }
+                
+                const priorityOrder = { high: 1, medium: 2, low: 3 };
+                return priorityOrder[a.priority] - priorityOrder[b.priority];
+            });
+            
+            // Display all tasks by default
+            displayTasks(tasks);
+            
+            // Update statistics
+            updateTaskStatistics();
+        }
+        
+        function displayTasks(taskList) {
+            const tasksListElement = document.getElementById('tasks-list');
+            const priorityTasksElement = document.getElementById('priority-tasks');
+            
+            // Clear existing tasks
+            tasksListElement.innerHTML = '';
+            priorityTasksElement.innerHTML = '';
+            
+            if (taskList.length === 0) {
+                tasksListElement.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma tarefa encontrada.</p>';
+                priorityTasksElement.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma tarefa prioritária.</p>';
+                return;
+            }
+            
+            // Group tasks by date
+            const tasksByDate = {};
+            taskList.forEach(task => {
+                if (!tasksByDate[task.date]) {
+                    tasksByDate[task.date] = [];
+                }
+                tasksByDate[task.date].push(task);
+            });
+            
+            // Display tasks grouped by date
+            for (const date in tasksByDate) {
+                const dateTasks = tasksByDate[date];
+                
+                // Add date header if not today
+                const today = new Date().toISOString().split('T')[0];
+                if (date !== today) {
+                    const dateHeader = document.createElement('div');
+                    dateHeader.className = 'text-sm font-medium text-gray-500 mt-4 mb-2';
+                    
+                    const dateObj = new Date(date);
+                    const options = { weekday: 'long', month: 'short', day: 'numeric' };
+                    dateHeader.textContent = dateObj.toLocaleDateString('pt-BR', options);
+                    
+                    tasksListElement.appendChild(dateHeader);
+                }
+                
+                // Add tasks for this date
+                dateTasks.forEach(task => {
+                    const taskElement = createTaskElement(task);
+                    tasksListElement.appendChild(taskElement);
+                    
+                    // Add to priority tasks if high priority
+                    if (task.priority === 'high') {
+                        const priorityTaskElement = createTaskElement(task);
+                        priorityTasksElement.appendChild(priorityTaskElement);
+                    }
+                });
+            }
+        }
+        
+        function createTaskElement(task) {
+            const taskElement = document.createElement('div');
+            taskElement.className = `task-item bg-white border rounded-lg p-4 flex items-start ${task.completed ? 'completed-task border-green-200 bg-green-50' : 'border-gray-200'}`;
+            
+            // Priority indicator
+            const priorityColors = {
+                high: 'bg-red-500',
+                medium: 'bg-yellow-500',
+                low: 'bg-blue-500'
+            };
+            
+            // Category icons
+            const categoryIcons = {
+                work: 'fas fa-briefcase',
+                personal: 'fas fa-home',
+                health: 'fas fa-heartbeat',
+                study: 'fas fa-book',
+                other: 'fas fa-star'
+            };
+            
+            taskElement.innerHTML = `
+                <div class="flex items-start w-full">
+                    <div class="mr-3 mt-1">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                               onclick="toggleTaskCompletion('${task.id}')" 
+                               class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-medium ${task.completed ? 'text-gray-500' : 'text-gray-800'}">${task.title}</h4>
+                            <div class="flex items-center space-x-2">
+                                ${task.important ? '<span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Importante</span>' : ''}
+                                <span class="text-xs ${priorityColors[task.priority]} text-white px-2 py-1 rounded-full">${task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa'}</span>
+                            </div>
+                        </div>
+                        ${task.description ? `<p class="text-sm text-gray-600 mt-1">${task.description}</p>` : ''}
+                        <div class="flex items-center mt-2 text-xs text-gray-500">
+                            <i class="${categoryIcons[task.category]} mr-1"></i>
+                            <span class="capitalize">${task.category}</span>
+                            ${task.date ? `<span class="mx-2">•</span><i class="far fa-calendar-alt mr-1"></i><span>${formatDate(task.date)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="ml-2 flex space-x-1">
+                        <button onclick="openTaskModal('${task.id}')" class="text-gray-400 hover:text-indigo-600">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteTask('${task.id}')" class="text-gray-400 hover:text-red-600">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return taskElement;
+        }
+        
+        function toggleTaskCompletion(taskId) {
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1) {
+                tasks[taskIndex].completed = !tasks[taskIndex].completed;
+                tasks[taskIndex].updatedAt = new Date().toISOString();
+                
+                // Save to localStorage
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                
+                // Reload tasks
+                loadTasks();
+            }
+        }
+        
+        function deleteTask(taskId) {
+            if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                tasks = tasks.filter(t => t.id !== taskId);
+                
+                // Save to localStorage
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                
+                // Reload tasks
+                loadTasks();
+            }
+        }
+        
+        function updateTaskStatistics() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayTasks = tasks.filter(task => task.date === today);
+            const completedTasks = tasks.filter(task => task.completed);
+            const importantTasks = tasks.filter(task => task.important);
+            
+            document.getElementById('today-tasks-count').textContent = todayTasks.length;
+            document.getElementById('completed-tasks-count').textContent = completedTasks.length;
+            document.getElementById('important-tasks-count').textContent = importantTasks.length;
+            
+            // Calculate completion percentage
+            const completionPercentage = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
+            document.getElementById('completion-bar').style.width = `${completionPercentage}%`;
+            document.getElementById('completion-percentage').textContent = `${completionPercentage}% concluído`;
+        }
+        
+        // Habit functions
+        function openHabitModal(habitId = null) {
+            const modal = document.getElementById('habit-modal');
+            const form = document.getElementById('habit-form');
+            
+            if (habitId) {
+                // Edit existing habit
+                const habit = habits.find(h => h.id === habitId);
+                if (habit) {
+                    document.getElementById('habit-modal-title').textContent = 'Editar Hábito';
+                    document.getElementById('habit-id').value = habit.id;
+                    document.getElementById('habit-name').value = habit.name;
+                    document.getElementById('habit-description').value = habit.description || '';
+                    document.getElementById('habit-frequency').value = habit.frequency;
+                    document.getElementById('habit-goal').value = habit.goal;
+                    document.getElementById('habit-color').value = habit.color;
+                    
+                    // Update frequency unit display
+                    updateHabitFrequencyUnit();
+                    
+                    // Highlight selected color
+                    document.querySelectorAll('.color-option').forEach(option => {
+                        option.classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
+                        if (option.dataset.color === habit.color) {
+                            option.classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
+                        }
+                    });
+                }
+            } else {
+                // Add new habit
+                document.getElementById('habit-modal-title').textContent = 'Novo Hábito';
+                form.reset();
+                document.getElementById('habit-frequency').value = 'daily';
+                document.getElementById('habit-goal').value = 1;
+                document.getElementById('habit-color').value = 'blue';
+                
+                // Update frequency unit display
+                updateHabitFrequencyUnit();
+                
+                // Highlight default color
+                document.querySelectorAll('.color-option').forEach(option => {
+                    option.classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
+                    if (option.dataset.color === 'blue') {
+                        option.classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
+                    }
+                });
+            }
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function closeHabitModal() {
+            document.getElementById('habit-modal').classList.add('hidden');
+        }
+        
+        function updateHabitFrequencyUnit() {
+            const frequency = document.getElementById('habit-frequency').value;
+            let unit = 'dia';
+            
+            if (frequency === 'weekly') {
+                unit = 'semana';
+            } else if (frequency === 'monthly') {
+                unit = 'mês';
+            }
+            
+            document.getElementById('habit-frequency-unit').textContent = unit;
+        }
+        
+        function selectHabitColor(color) {
+            document.getElementById('habit-color').value = color;
+            
+            // Update UI
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
+                if (option.dataset.color === color) {
+                    option.classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
+                }
+            });
+        }
+        
+        function saveHabit(e) {
+            e.preventDefault();
+            
+            const habitId = document.getElementById('habit-id').value;
+            const name = document.getElementById('habit-name').value;
+            const description = document.getElementById('habit-description').value;
+            const frequency = document.getElementById('habit-frequency').value;
+            const goal = parseInt(document.getElementById('habit-goal').value);
+            const color = document.getElementById('habit-color').value;
+            
+            // Get current date in YYYY-MM-DD format
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (habitId) {
+                // Update existing habit
+                const index = habits.findIndex(h => h.id === habitId);
+                if (index !== -1) {
+                    habits[index] = {
+                        ...habits[index],
+                        name,
+                        description,
+                        frequency,
+                        goal,
+                        color,
+                        updatedAt: new Date().toISOString()
+                    };
+                }
+            } else {
+                // Add new habit
+                const newHabit = {
+                    id: Date.now().toString(),
+                    name,
+                    description,
+                    frequency,
+                    goal,
+                    color,
+                    streak: 0,
+                    longestStreak: 0,
+                    completions: {},
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                // Initialize completions for the current period
+                if (frequency === 'daily') {
+                    newHabit.completions[today] = 0;
+                } else if (frequency === 'weekly') {
+                    const weekStart = getWeekStartDate(today);
+                    newHabit.completions[weekStart] = 0;
+                } else if (frequency === 'monthly') {
+                    const monthStart = today.substring(0, 7) + '-01';
+                    newHabit.completions[monthStart] = 0;
+                }
+                
+                habits.push(newHabit);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('habits', JSON.stringify(habits));
+            
+            // Reload habits
+            loadHabits();
+            
+            // Close modal
+            closeHabitModal();
+        }
+        
+        function loadHabits() {
+            const habitsListElement = document.getElementById('habits-list');
+            const habitsProgressElement = document.getElementById('habits-progress');
+            
+            // Clear existing habits
+            habitsListElement.innerHTML = '';
+            habitsProgressElement.innerHTML = '';
+            
+            if (habits.length === 0) {
+                habitsListElement.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum hábito cadastrado.</p>';
+                habitsProgressElement.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum hábito para mostrar progresso.</p>';
+                return;
+            }
+            
+            // Get current date and period information
+            const today = new Date().toISOString().split('T')[0];
+            const weekStart = getWeekStartDate(today);
+            const monthStart = today.substring(0, 7) + '-01';
+            
+            // Display habits
+            habits.forEach(habit => {
+                // Determine current period key
+                let periodKey = today;
+                if (habit.frequency === 'weekly') {
+                    periodKey = weekStart;
+                } else if (habit.frequency === 'monthly') {
+                    periodKey = monthStart;
+                }
+                
+                // Initialize completions for current period if not exists
+                if (!habit.completions[periodKey]) {
+                    habit.completions[periodKey] = 0;
+                    localStorage.setItem('habits', JSON.stringify(habits));
+                }
+                
+                // Calculate completion percentage
+                const completionPercentage = Math.min(Math.round((habit.completions[periodKey] / habit.goal) * 100), 100);
+                
+                // Create habit element
+                const habitElement = document.createElement('div');
+                habitElement.className = 'bg-white border border-gray-200 rounded-lg p-4';
+                
+                const colorClasses = {
+                    blue: 'bg-blue-100 text-blue-800',
+                    green: 'bg-green-100 text-green-800',
+                    yellow: 'bg-yellow-100 text-yellow-800',
+                    red: 'bg-red-100 text-red-800',
+                    purple: 'bg-purple-100 text-purple-800',
+                    pink: 'bg-pink-100 text-pink-800'
+                };
+                
+                habitElement.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-medium text-gray-800">${habit.name}</h4>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs ${colorClasses[habit.color]} px-2 py-1 rounded-full">
+                                ${habit.frequency === 'daily' ? 'Diário' : habit.frequency === 'weekly' ? 'Semanal' : 'Mensal'}
+                            </span>
+                            <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                                Sequência: ${habit.streak} dias
+                            </span>
+                        </div>
+                    </div>
+                    ${habit.description ? `<p class="text-sm text-gray-600 mb-3">${habit.description}</p>` : ''}
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 mr-4">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Progresso</span>
+                                <span>${habit.completions[periodKey]} de ${habit.goal}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="h-2 rounded-full ${'bg-' + habit.color + '-500'}" style="width: ${completionPercentage}%"></div>
+                            </div>
+                        </div>
+                        <button onclick="incrementHabitCompletion('${habit.id}')" class="bg-${habit.color}-500 hover:bg-${habit.color}-600 text-white px-3 py-1 rounded-lg text-sm">
+                            <i class="fas fa-plus mr-1"></i>Adicionar
+                        </button>
+                    </div>
+                    <div class="flex justify-end mt-2 space-x-2">
+                        <button onclick="openHabitModal('${habit.id}')" class="text-gray-400 hover:text-indigo-600 text-sm">
+                            <i class="fas fa-edit mr-1"></i>Editar
+                        </button>
+                        <button onclick="deleteHabit('${habit.id}')" class="text-gray-400 hover:text-red-600 text-sm">
+                            <i class="fas fa-trash-alt mr-1"></i>Excluir
+                        </button>
+                    </div>
+                `;
+                
+                habitsListElement.appendChild(habitElement);
+                
+                // Create habit progress chart for habits page
+                const progressElement = document.createElement('div');
+                progressElement.className = 'bg-white border border-gray-200 rounded-lg p-4';
+                
+                // Get last 7 days for daily habits, last 4 weeks for weekly, last 6 months for monthly
+                let periods = [];
+                let periodLabels = [];
+                const now = new Date();
+                
+                if (habit.frequency === 'daily') {
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date(now);
+                        date.setDate(date.getDate() - i);
+                        const dateStr = date.toISOString().split('T')[0];
+                        periods.push(dateStr);
+                        periodLabels.push(formatDateShort(dateStr));
+                    }
+                } else if (habit.frequency === 'weekly') {
+                    for (let i = 3; i >= 0; i--) {
+                        const date = new Date(now);
+                        date.setDate(date.getDate() - (i * 7));
+                        const weekStart = getWeekStartDate(date.toISOString().split('T')[0]);
+                        periods.push(weekStart);
+                        periodLabels.push(`Sem ${formatDateShort(weekStart)}`);
+                    }
+                } else if (habit.frequency === 'monthly') {
+                    for (let i = 5; i >= 0; i--) {
+                        const date = new Date(now);
+                        date.setMonth(date.getMonth() - i);
+                        const monthStart = date.toISOString().split('T')[0].substring(0, 7) + '-01';
+                        periods.push(monthStart);
+                        periodLabels.push(formatMonth(monthStart));
+                    }
+                }
+                
+                // Prepare data for chart
+                const completionData = periods.map(period => {
+                    return habit.completions[period] ? 
+                        Math.min(Math.round((habit.completions[period] / habit.goal) * 100), 100) : 0;
+                });
+                
+                progressElement.innerHTML = `
+                    <h4 class="font-medium text-gray-800 mb-2">${habit.name}</h4>
+                    <div class="habit-tracker flex justify-between items-end h-24">
+                        ${periods.map((period, index) => `
+                            <div class="flex flex-col items-center flex-1 px-1">
+                                <div 
+                                    class="w-full ${'bg-' + habit.color + '-500'} rounded-t-sm hover:${'bg-' + habit.color + '-600'} cursor-pointer habit-day" 
+                                    style="height: ${completionData[index]}%"
+                                    title="${periodLabels[index]}: ${completionData[index]}%"
+                                    onclick="viewHabitDetails('${habit.id}', '${period}')"
+                                ></div>
+                                <div class="text-xs text-gray-500 mt-1">${periodLabels[index].split(' ')[0]}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                habitsProgressElement.appendChild(progressElement);
+            });
+        }
+        
+        function incrementHabitCompletion(habitId) {
+            const habitIndex = habits.findIndex(h => h.id === habitId);
+            if (habitIndex === -1) return;
+            
+            const habit = habits[habitIndex];
+            const today = new Date().toISOString().split('T')[0];
+            const weekStart = getWeekStartDate(today);
+            const monthStart = today.substring(0, 7) + '-01';
+            
+            // Determine current period key
+            let periodKey = today;
+            if (habit.frequency === 'weekly') {
+                periodKey = weekStart;
+            } else if (habit.frequency === 'monthly') {
+                periodKey = monthStart;
+            }
+            
+            // Initialize if not exists
+            if (!habit.completions[periodKey]) {
+                habit.completions[periodKey] = 0;
+            }
+            
+            // Increment if not already reached goal
+            if (habit.completions[periodKey] < habit.goal) {
+                habit.completions[periodKey]++;
+                
+                // Check for streak
+                if (habit.frequency === 'daily') {
+                    // For daily habits, check if yesterday was also completed
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const yesterdayStr = yesterday.toISOString().split('T')[0];
+                    
+                    if (habit.completions[yesterdayStr] >= (habit.frequency === 'daily' ? 1 : habit.goal)) {
+                        habit.streak++;
+                    } else {
+                        // If this is the first completion today and yesterday wasn't completed
+                        if (habit.completions[periodKey] === 1) {
+                            habit.streak = 1; // Reset or start new streak
+                        }
+                    }
+                    
+                    // Update longest streak
+                    if (habit.streak > habit.longestStreak) {
+                        habit.longestStreak = habit.streak;
+                    }
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('habits', JSON.stringify(habits));
+                
+                // Reload habits
+                loadHabits();
+            }
+        }
+        
+        function viewHabitDetails(habitId, period) {
+            const habit = habits.find(h => h.id === habitId);
+            if (!habit) return;
+            
+            alert(`Detalhes do hábito ${habit.name} para o período ${formatDate(period)}:\nCompletado ${habit.completions[period] || 0} vezes de ${habit.goal} (${Math.round(((habit.completions[period] || 0) / habit.goal) * 100)}%)`);
+        }
+        
+        function deleteHabit(habitId) {
+            if (confirm('Tem certeza que deseja excluir este hábito?')) {
+                habits = habits.filter(h => h.id !== habitId);
+                
+                // Save to localStorage
+                localStorage.setItem('habits', JSON.stringify(habits));
+                
+                // Reload habits
+                loadHabits();
+            }
+        }
+        
+        // Calendar functions
+        function loadCalendar() {
+            const calendarGrid = document.getElementById('calendar-grid');
+            calendarGrid.innerHTML = '';
+            
+            // Get first day of month and total days in month
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            // Get previous month's days to show
+            const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+            
+            // Fill in previous month's days
+            for (let i = 0; i < firstDay; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'bg-gray-100 text-gray-400 p-2 h-24 overflow-y-auto';
+                dayElement.textContent = prevMonthDays - firstDay + i + 1;
+                calendarGrid.appendChild(dayElement);
+            }
+            
+            // Fill in current month's days
+            const today = new Date();
+            const currentDate = today.getDate();
+            const currentMonthNow = today.getMonth();
+            const currentYearNow = today.getFullYear();
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayElement = document.createElement('div');
+                
+                // Check if this is today
+                const isToday = i === currentDate && currentMonth === currentMonthNow && currentYear === currentYearNow;
+                
+                dayElement.className = `border p-2 h-24 overflow-y-auto ${isToday ? 'bg-indigo-50 border-indigo-300' : 'border-gray-200'}`;
+                
+                // Day number
+                const dayNumber = document.createElement('div');
+                dayNumber.className = `font-medium mb-1 ${isToday ? 'text-indigo-700' : 'text-gray-700'}`;
+                dayNumber.textContent = i;
+                dayElement.appendChild(dayNumber);
+                
+                // Get events for this day
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const dayEvents = events.filter(event => event.date === dateStr);
+                
+                // Add events to day
+                dayEvents.forEach(event => {
+                    const eventElement = document.createElement('div');
+                    eventElement.className = 'text-xs bg-blue-100 text-blue-800 rounded px-1 mb-1 truncate';
+                    eventElement.textContent = `${event.startTime} ${event.title}`;
+                    eventElement.title = `${event.startTime}-${event.endTime}: ${event.title}`;
+                    dayElement.appendChild(eventElement);
+                });
+                
+                // Add click event to open event modal
+                dayElement.addEventListener('click', () => {
+                    openEventModal(dateStr);
+                });
+                
+                calendarGrid.appendChild(dayElement);
+            }
+            
+            // Fill in next month's days to complete the grid
+            const totalCells = 42; // 6 weeks
+            const remainingCells = totalCells - (firstDay + daysInMonth);
+            
+            for (let i = 1; i <= remainingCells; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'bg-gray-100 text-gray-400 p-2 h-24 overflow-y-auto';
+                dayElement.textContent = i;
+                calendarGrid.appendChild(dayElement);
+            }
+            
+            // Update calendar header with month/year
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            document.getElementById('current-date').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            
+            // Load today's events
+            loadTodayEvents();
+        }
+        
+        function changeMonth(offset) {
+            currentMonth += offset;
+            
+            // Adjust year if necessary
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            
+            // Reload calendar
+            loadCalendar();
+        }
+        
+        function goToToday() {
+            const today = new Date();
+            currentMonth = today.getMonth();
+            currentYear = today.getFullYear();
+            loadCalendar();
+        }
+        
+        function openEventModal(date) {
+            selectedDate = date;
+            const modal = document.getElementById('event-modal');
+            const eventList = document.getElementById('event-list');
+            
+            // Clear existing events
+            eventList.innerHTML = '';
+            
+            // Get events for selected date
+            const dateEvents = events.filter(event => event.date === date);
+            
+            if (dateEvents.length === 0) {
+                eventList.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum evento para este dia.</p>';
+            } else {
+                dateEvents.forEach(event => {
+                    const eventElement = document.createElement('div');
+                    eventElement.className = 'bg-white border border-gray-200 rounded-lg p-3 flex justify-between items-center';
+                    eventElement.innerHTML = `
+                        <div>
+                            <h4 class="font-medium text-gray-800">${event.title}</h4>
+                            <p class="text-sm text-gray-600">${event.startTime} - ${event.endTime}</p>
+                        </div>
+                        <button onclick="deleteEvent('${event.id}')" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    `;
+                    eventList.appendChild(eventElement);
+                });
+            }
+            
+            // Reset form
+            document.getElementById('event-form').reset();
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function closeEventModal() {
+            document.getElementById('event-modal').classList.add('hidden');
+        }
+        
+        function saveEvent(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('event-title').value;
+            const startTime = document.getElementById('event-start-time').value;
+            const endTime = document.getElementById('event-end-time').value;
+            
+            if (!title || !startTime || !endTime) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            const newEvent = {
+                id: Date.now().toString(),
+                title,
+                date: selectedDate,
+                startTime,
+                endTime,
+                createdAt: new Date().toISOString()
+            };
+            
+            events.push(newEvent);
+            
+            // Save to localStorage
+            localStorage.setItem('events', JSON.stringify(events));
+            
+            // Reload calendar and events
+            loadCalendar();
+            closeEventModal();
+        }
+        
+        function deleteEvent(eventId) {
+            if (confirm('Tem certeza que deseja excluir este evento?')) {
+                events = events.filter(e => e.id !== eventId);
+                
+                // Save to localStorage
+                localStorage.setItem('events', JSON.stringify(events));
+                
+                // Reload calendar and events
+                loadCalendar();
+                openEventModal(selectedDate);
+            }
+        }
+        
+        function loadTodayEvents() {
+            const todayEventsElement = document.getElementById('today-events');
+            todayEventsElement.innerHTML = '';
+            
+            const today = new Date().toISOString().split('T')[0];
+            const todayEvents = events.filter(event => event.date === today);
+            
+            if (todayEvents.length === 0) {
+                todayEventsElement.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum evento para hoje.</p>';
+            } else {
+                todayEvents.forEach(event => {
+                    const eventElement = document.createElement('div');
+                    eventElement.className = 'bg-white border border-gray-200 rounded-lg p-3';
+                    eventElement.innerHTML = `
+                        <h4 class="font-medium text-gray-800">${event.title}</h4>
+                        <p class="text-sm text-gray-600">${event.startTime} - ${event.endTime}</p>
+                    `;
+                    todayEventsElement.appendChild(eventElement);
+                });
+            }
+        }
+        
+        // Pomodoro functions
+        function loadPomodoroSettings() {
+            document.getElementById('focus-time').value = pomodoroSettings.focusTime;
+            document.getElementById('short-break-time').value = pomodoroSettings.shortBreakTime;
+            document.getElementById('long-break-time').value = pomodoroSettings.longBreakTime;
+            document.getElementById('pomodoros-until-long-break').value = pomodoroSettings.pomodorosUntilLongBreak;
+        }
+        
+        function savePomodoroSettings() {
+            pomodoroSettings = {
+                focusTime: parseInt(document.getElementById('focus-time').value),
+                shortBreakTime: parseInt(document.getElementById('short-break-time').value),
+                longBreakTime: parseInt(document.getElementById('long-break-time').value),
+                pomodorosUntilLongBreak: parseInt(document.getElementById('pomodoros-until-long-break').value)
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('pomodoroSettings', JSON.stringify(pomodoroSettings));
+            
+            // Reset timer with new settings
+            resetTimer();
+            
+            alert('Configurações do Pomodoro salvas com sucesso!');
+        }
+        
+        function startTimer() {
+            if (timerRunning && !timerPaused) return;
+            
+            if (timerPaused) {
+                // Resume paused timer
+                timerPaused = false;
+                document.getElementById('pause-btn').classList.remove('hidden');
+                document.getElementById('start-btn').classList.add('hidden');
+                document.getElementById('timer-state').textContent = currentTimerType === 'focus' ? 'Foco' : currentTimerType === 'shortBreak' ? 'Pausa Curta' : 'Pausa Longa';
+            } else {
+                // Start new timer
+                timerRunning = true;
+                timerPaused = false;
+                document.getElementById('pause-btn').classList.remove('hidden');
+                document.getElementById('start-btn').classList.add('hidden');
+                
+                if (currentTimerType === 'focus') {
+                    document.getElementById('timer-state').textContent = 'Foco';
+                } else if (currentTimerType === 'shortBreak') {
+                    document.getElementById('timer-state').textContent = 'Pausa Curta';
+                } else {
+                    document.getElementById('timer-state').textContent = 'Pausa Longa';
+                }
+            }
+            
+            timer = setInterval(() => {
+                remainingTime--;
+                updateTimerDisplay();
+                
+                if (remainingTime <= 0) {
+                    clearInterval(timer);
+                    timerRunning = false;
+                    
+                    // Play sound
+                    const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+                    audio.play();
+                    
+                    // Handle timer completion
+                    if (currentTimerType === 'focus') {
+                        pomodoroCount++;
+                        
+                        // Add to history
+                        const session = {
+                            id: Date.now().toString(),
+                            type: 'focus',
+                            duration: pomodoroSettings.focusTime,
+                            completedAt: new Date().toISOString()
+                        };
+                        
+                        pomodoroHistory.push(session);
+                        localStorage.setItem('pomodoroHistory', JSON.stringify(pomodoroHistory));
+                        loadPomodoroHistory();
+                        
+                        // Determine next break type
+                        if (pomodoroCount % pomodoroSettings.pomodorosUntilLongBreak === 0) {
+                            currentTimerType = 'longBreak';
+                            remainingTime = pomodoroSettings.longBreakTime * 60;
+                            alert('Bom trabalho! Hora de uma pausa longa.');
+                        } else {
+                            currentTimerType = 'shortBreak';
+                            remainingTime = pomodoroSettings.shortBreakTime * 60;
+                            alert('Bom trabalho! Hora de uma pausa curta.');
+                        }
+                    } else {
+                        // Break completed, start focus timer
+                        currentTimerType = 'focus';
+                        remainingTime = pomodoroSettings.focusTime * 60;
+                        
+                        if (pomodoroCount % pomodoroSettings.pomodorosUntilLongBreak === 0) {
+                            alert('Pausa longa concluída. Hora de focar novamente!');
+                        } else {
+                            alert('Pausa curta concluída. Hora de focar novamente!');
+                        }
+                    }
+                    
+                    document.getElementById('start-btn').classList.remove('hidden');
+                    document.getElementById('pause-btn').classList.add('hidden');
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
+        
+        function pauseTimer() {
+            if (!timerRunning) return;
+            
+            clearInterval(timer);
+            timerPaused = true;
+            document.getElementById('pause-btn').classList.add('hidden');
+            document.getElementById('start-btn').classList.remove('hidden');
+            document.getElementById('timer-state').textContent = 'Pausado';
+        }
+        
+        function resetTimer() {
+            clearInterval(timer);
+            timerRunning = false;
+            timerPaused = false;
+            
+            // Reset to focus timer
+            currentTimerType = 'focus';
+            remainingTime = pomodoroSettings.focusTime * 60;
+            
+            document.getElementById('start-btn').classList.remove('hidden');
+            document.getElementById('pause-btn').classList.add('hidden');
+            document.getElementById('timer-state').textContent = 'Pronto para começar';
+            
+            updateTimerDisplay();
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            
+            document.getElementById('timer-display').textContent = 
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // Update timer circle color based on type
+            const timerCircle = document.querySelector('.pomodoro-timer');
+            timerCircle.classList.remove('bg-indigo-100', 'bg-green-100', 'bg-red-100');
+            
+            if (currentTimerType === 'focus') {
+                timerCircle.classList.add('bg-indigo-100');
+            } else if (currentTimerType === 'shortBreak') {
+                timerCircle.classList.add('bg-green-100');
+            } else {
+                timerCircle.classList.add('bg-red-100');
+            }
+        }
+        
+        function loadPomodoroHistory() {
+            const historyElement = document.getElementById('pomodoro-history');
+            historyElement.innerHTML = '';
+            
+            if (pomodoroHistory.length === 0) {
+                historyElement.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma sessão registrada ainda.</p>';
+                return;
+            }
+            
+            // Display last 10 sessions
+            const recentSessions = pomodoroHistory.slice(-10).reverse();
+            
+            recentSessions.forEach(session => {
+                const sessionElement = document.createElement('div');
+                sessionElement.className = 'bg-white border border-gray-200 rounded-lg p-3 mb-2';
+                
+                const sessionDate = new Date(session.completedAt);
+                const options = { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' };
+                
+                sessionElement.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="inline-block w-4 h-4 rounded-full ${session.type === 'focus' ? 'bg-indigo-500' : session.type === 'shortBreak' ? 'bg-green-500' : 'bg-red-500'} mr-2"></span>
+                            <span class="font-medium">${session.type === 'focus' ? 'Foco' : session.type === 'shortBreak' ? 'Pausa Curta' : 'Pausa Longa'}</span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            ${sessionDate.toLocaleDateString('pt-BR', options)}
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-500 mt-1">
+                        Duração: ${session.duration} minutos
+                    </div>
+                `;
+                
+                historyElement.appendChild(sessionElement);
+            });
+        }
+        
+        // Utility functions
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        }
+        
+        function formatDateShort(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-BR', { day: '2-digit' });
+        }
+        
+        function formatMonth(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-BR', { month: 'short' });
+        }
+        
+        function getWeekStartDate(dateStr) {
+            const date = new Date(dateStr);
+            const dayOfWeek = date.getDay();
+            const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust for Sunday
+            const weekStart = new Date(date.setDate(diff));
+            return weekStart.toISOString().split('T')[0];
+        }
+    </script>
+</body>
+</html>
